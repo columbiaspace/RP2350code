@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.16)
 project(RP2350code VERSION 1.0.0 LANGUAGES C CXX)
 
 set(FPRIME_INCLUDE_FRAMEWORK_CODE OFF)
