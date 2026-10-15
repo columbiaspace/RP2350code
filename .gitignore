@@ -1,0 +1,14 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+logs/
+
+build*/
+build-artifacts/
+cmake-build-*/
+F-Prime/
+
+third-party/fprime
+third-party/pico-sdk
+third-party/FreeRTOS-Kernel
