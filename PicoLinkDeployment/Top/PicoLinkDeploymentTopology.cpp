@@ -1,13 +1,7 @@
-// ======================================================================
-// \title  PicoLinkDeploymentTopology.cpp
-// \brief cpp file containing the topology instantiation code
-//
-// ======================================================================
+// Wires F Prime components: GDS TCP (comDriver) and Pico UART (picoUart).
+// Most of setupTopology() is generated; configureTopology() is the project-specific bit.
 // Provides access to autocoded functions
 #include <PicoLinkDeployment/Top/PicoLinkDeploymentTopologyAc.hpp>
-// Note: Uncomment when using Svc:TlmPacketizer
-//#include <PicoLinkDeployment/Top/PicoLinkDeploymentPacketsAc.hpp>
-
 // Necessary project-specified types
 #include <Fw/Types/MallocAllocator.hpp>
 

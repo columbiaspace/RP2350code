@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
+# Pico SDK provides headers, the compiler, and board support for Pico 2.
 if(NOT DEFINED PICO_SDK_PATH AND DEFINED ENV{PICO_SDK_PATH})
     set(PICO_SDK_PATH "$ENV{PICO_SDK_PATH}")
 endif()
@@ -27,17 +28,9 @@ if(NOT EXISTS "${FREERTOS_RP2350_PORT}/FreeRTOS_Kernel_import.cmake")
 endif()
 include("${FREERTOS_RP2350_PORT}/FreeRTOS_Kernel_import.cmake")
 
-option(PICO_LINK_MOCK_SENSOR "Generate clearly marked mock millivolt readings" OFF)
-
-if(PICO_LINK_MOCK_SENSOR)
-    set(PICO_LINK_SENSOR_SOURCES src/MockSensor.cpp)
-else()
-    set(PICO_LINK_SENSOR_SOURCES src/IrAdcSensor.cpp)
-endif()
-
 add_executable(pico_link_firmware
     src/main.cpp
-    ${PICO_LINK_SENSOR_SOURCES}
+    src/IrAdcSensor.cpp
     ../common/protocol/PicoProtocol.cpp
 )
 target_include_directories(pico_link_firmware PRIVATE
@@ -45,21 +38,16 @@ target_include_directories(pico_link_firmware PRIVATE
     ../common/protocol
 )
 target_compile_features(pico_link_firmware PRIVATE cxx_std_17)
-target_compile_definitions(pico_link_firmware PRIVATE
-    PICO_LINK_MOCK_SENSOR=$<BOOL:${PICO_LINK_MOCK_SENSOR}>
-)
 target_compile_options(pico_link_firmware PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(pico_link_firmware PRIVATE
     FreeRTOS-Kernel-Static
     pico_stdlib
+    hardware_adc
     hardware_uart
     hardware_timer
 )
-if(NOT PICO_LINK_MOCK_SENSOR)
-    target_link_libraries(pico_link_firmware PRIVATE hardware_adc)
-endif()
 
-# Protocol UART is UART0 on GP0/GP1. Logs use USB CDC only.
+# UART0 on GP0/GP1 is the protocol link. USB CDC is printf logs only.
 pico_enable_stdio_uart(pico_link_firmware 0)
 pico_enable_stdio_usb(pico_link_firmware 1)
 pico_add_extra_outputs(pico_link_firmware)

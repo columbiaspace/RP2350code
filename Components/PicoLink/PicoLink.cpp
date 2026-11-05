@@ -7,7 +7,7 @@
 namespace PicoLink {
 
 namespace {
-constexpr U8 REQUEST_TIMEOUT_TICKS = 3;
+constexpr U8 REQUEST_TIMEOUT_TICKS = 3;  // 1 Hz rate group => 3 seconds
 }
 
 PicoLink::PicoLink(const char* componentName)
@@ -27,7 +27,6 @@ PicoLink::PicoLink(const char* componentName)
     this->m_expectedDetail[0] = '\0';
     this->tlmWrite_LinkStatus(0);
     this->tlmWrite_SampleValid(0);
-    this->tlmWrite_SampleSource(0);
 }
 
 void PicoLink::byteStreamDriverReady_handler(FwIndexType portNum) {
@@ -59,8 +58,6 @@ void PicoLink::fromByteStreamDriver_handler(FwIndexType portNum,
     } else {
         this->log_WARNING_HI_DriverError();
     }
-
-    // PosixUartDriver allocated this buffer. Never retain it after this call.
     this->fromByteStreamDriverReturn_out(portNum, buffer);
 }
 
@@ -260,20 +257,14 @@ void PicoLink::handleLine(const char* line) {
     }
     Fw::LogStringArg replyArg(replyName);
     this->log_ACTIVITY_LO_ReplyReceived(reply.id, replyArg);
-    this->cmdResponse_out(opCode,
-                          cmdSeq,
-                          successful ? Fw::CmdResponse::OK
-                                     : Fw::CmdResponse::EXECUTION_ERROR);
+    this->cmdResponse_out(opCode, cmdSeq,
+                          successful ? Fw::CmdResponse::OK : Fw::CmdResponse::EXECUTION_ERROR);
 }
 
 void PicoLink::handleData(const PicoProtocol::Reply& reply) {
     this->tlmWrite_SampleSequence(reply.sampleSequence);
     this->tlmWrite_PicoUptimeUs(reply.uptimeUs);
     this->tlmWrite_SampleValid(reply.valid ? 1 : 0);
-    this->tlmWrite_SampleAgeMs(reply.ageMs);
-    this->tlmWrite_SampleSource(reply.source == PicoProtocol::Source::MOCK
-                                   ? 1
-                                   : (reply.source == PicoProtocol::Source::REAL ? 2 : 0));
     if (reply.valid) {
         this->tlmWrite_IrMilliVolts(reply.valueMilli);
     } else {

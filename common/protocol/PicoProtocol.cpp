@@ -10,8 +10,9 @@
 namespace PicoProtocol {
 namespace {
 
-constexpr std::size_t MAX_FIELDS = 10;
+constexpr std::size_t MAX_FIELDS = 8;
 
+// Split on commas in place. Returns how many fields were found.
 std::size_t split(char* text, char* fields[MAX_FIELDS]) {
     std::size_t count = 0;
     if (*text == '\0') {
@@ -214,33 +215,24 @@ ParseResult parseReply(const char* line, Reply& reply) {
                    ? ParseResult::OK
                    : ParseResult::OUT_OF_RANGE;
     }
-    if ((std::strcmp(fields[0], "DATA") == 0) && (count == 9)) {
+    // DATA,<id>,<seq>,<uptime_us>,<valid>,<ir_millivolts>,<status>
+    if ((std::strcmp(fields[0], "DATA") == 0) && (count == 7)) {
         std::uint64_t sequence = 0;
         std::uint64_t uptime = 0;
         std::uint64_t valid = 0;
-        std::uint64_t age = 0;
         if (!parseUnsigned(fields[2], UINT32_MAX, sequence) ||
             !parseUnsigned(fields[3], UINT64_MAX, uptime) ||
             !parseUnsigned(fields[4], 1, valid) ||
-            !parseSigned32(fields[6], reply.valueMilli) ||
-            !parseUnsigned(fields[7], UINT32_MAX, age)) {
+            !parseSigned32(fields[5], reply.valueMilli)) {
             return ParseResult::OUT_OF_RANGE;
         }
-        if (std::strcmp(fields[5], "MOCK") == 0) {
-            reply.source = Source::MOCK;
-        } else if (std::strcmp(fields[5], "REAL") == 0) {
-            reply.source = Source::REAL;
-        } else {
-            return ParseResult::OUT_OF_RANGE;
-        }
-        if (!copyField(reply.status, sizeof(reply.status), fields[8])) {
+        if (!copyField(reply.status, sizeof(reply.status), fields[6])) {
             return ParseResult::OUT_OF_RANGE;
         }
         reply.type = ReplyType::DATA;
         reply.sampleSequence = static_cast<std::uint32_t>(sequence);
         reply.uptimeUs = uptime;
         reply.valid = (valid != 0);
-        reply.ageMs = static_cast<std::uint32_t>(age);
         return ParseResult::OK;
     }
     return ParseResult::UNKNOWN_TYPE;
@@ -262,17 +254,11 @@ bool formatRead(char* output, std::size_t capacity, std::uint16_t id) {
     return (id != 0) && format(output, capacity, "CMD,%u,READ\n", id);
 }
 
-bool formatStream(char* output,
-                  std::size_t capacity,
-                  std::uint16_t id,
-                  std::uint32_t periodMs) {
+bool formatStream(char* output, std::size_t capacity, std::uint16_t id, std::uint32_t periodMs) {
     return (id != 0) && format(output, capacity, "CMD,%u,STREAM,%" PRIu32 "\n", id, periodMs);
 }
 
-bool formatAck(char* output,
-               std::size_t capacity,
-               std::uint16_t id,
-               const char* payload) {
+bool formatAck(char* output, std::size_t capacity, std::uint16_t id, const char* payload) {
     if ((id == 0) || ((payload != nullptr) && (std::strpbrk(payload, ",\r\n") != nullptr))) {
         return false;
     }
@@ -281,10 +267,7 @@ bool formatAck(char* output,
                : format(output, capacity, "ACK,%u,OK,%s\n", id, payload);
 }
 
-bool formatError(char* output,
-                 std::size_t capacity,
-                 std::uint16_t id,
-                 const char* code) {
+bool formatError(char* output, std::size_t capacity, std::uint16_t id, const char* code) {
     if ((id == 0) || (code == nullptr) || (*code == '\0') ||
         (std::strpbrk(code, ",\r\n") != nullptr)) {
         return false;
@@ -298,36 +281,13 @@ bool formatData(char* output,
                 std::uint32_t sequence,
                 std::uint64_t uptimeUs,
                 bool valid,
-                Source source,
                 std::int32_t valueMilli,
-                std::uint32_t ageMs,
                 const char* status) {
-    if ((status == nullptr) || (*status == '\0') ||
-        (std::strpbrk(status, ",\r\n") != nullptr) || (source == Source::UNKNOWN)) {
+    if ((status == nullptr) || (*status == '\0') || (std::strpbrk(status, ",\r\n") != nullptr)) {
         return false;
     }
-    return format(output,
-                  capacity,
-                  "DATA,%u,%" PRIu32 ",%" PRIu64 ",%u,%s,%" PRId32 ",%" PRIu32 ",%s\n",
-                  id,
-                  sequence,
-                  uptimeUs,
-                  valid ? 1U : 0U,
-                  sourceName(source),
-                  valueMilli,
-                  ageMs,
-                  status);
-}
-
-const char* sourceName(Source source) {
-    switch (source) {
-        case Source::MOCK:
-            return "MOCK";
-        case Source::REAL:
-            return "REAL";
-        default:
-            return "UNKNOWN";
-    }
+    return format(output, capacity, "DATA,%u,%" PRIu32 ",%" PRIu64 ",%u,%" PRId32 ",%s\n", id,
+                  sequence, uptimeUs, valid ? 1U : 0U, valueMilli, status);
 }
 
 }  // namespace PicoProtocol

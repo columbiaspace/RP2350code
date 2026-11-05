@@ -4,10 +4,11 @@
 #include <Components/PicoLink/PicoLinkComponentAc.hpp>
 #include <Os/Mutex.hpp>
 
-#include <common/protocol/PicoProtocol.hpp>
+#include "PicoProtocol.hpp"
 
 namespace PicoLink {
 
+// F Prime component: one outstanding UART request at a time.
 class PicoLink final : public PicoLinkComponentBase {
   public:
     explicit PicoLink(const char* componentName);

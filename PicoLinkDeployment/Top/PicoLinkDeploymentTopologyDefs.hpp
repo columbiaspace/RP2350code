@@ -64,8 +64,8 @@ namespace PicoLinkDeployment {
 struct TopologyState {
     const char* hostname;   //!< Hostname for TCP communication
     U16 port;              //!< Port for TCP communication
-    const char* uartDevice; //!< Pico protocol UART device
-    U32 uartBaud;           //!< Pico protocol UART baud (currently 115200)
+    const char* uartDevice; //!< Pico UART, e.g. /dev/ttyAMA0
+    U32 uartBaud;           //!< must be 115200
     CdhCore::SubtopologyState cdhCore;           //!< Subtopology state for CdhCore
     ComCcsds::SubtopologyState comCcsds;         //!< Subtopology state for ComCcsds 
     DataProducts::SubtopologyState dataProducts; //!< Subtopology state for DataProducts
