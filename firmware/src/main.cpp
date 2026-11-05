@@ -1,12 +1,14 @@
 // Pico firmware: FreeRTOS + UART protocol + analog IR on GP28.
 //
-// Two tasks:
+// Three tasks:
 //   protocol (priority 3) — owns UART0 on GP0/GP1
 //   sensor   (priority 2) — owns the ADC and produces DATA lines
+//   led      (priority 1) — owns the onboard LED
 //
-// They never share UART or ADC. They pass messages on two queues.
+// The protocol and sensor tasks pass messages on two queues.
 
 #include "IrAdcSensor.hpp"
+#include "Led.hpp"
 #include "PicoProtocol.hpp"
 
 #include "hardware/gpio.h"
@@ -259,6 +261,7 @@ int main() {
     (void)protocolTaskHandle;
     (void)sensorTaskHandle;
 
+    startLedTask();  // Create the independent onboard LED heartbeat task.
     vTaskStartScheduler();  // does not return if the scheduler starts
     panic("FreeRTOS scheduler exited");
 }

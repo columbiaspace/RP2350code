@@ -31,6 +31,7 @@ include("${FREERTOS_RP2350_PORT}/FreeRTOS_Kernel_import.cmake")
 add_executable(pico_link_firmware
     src/main.cpp
     src/IrAdcSensor.cpp
+    src/Led.cpp
     ../common/protocol/PicoProtocol.cpp
 )
 target_include_directories(pico_link_firmware PRIVATE
