@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
 # Pico SDK provides headers, the compiler, and board support for Pico 2.
+if(NOT DEFINED PICO_BOARD)
+    set(PICO_BOARD pico2 CACHE STRING "Pico SDK board definition")
+endif()
 if(NOT DEFINED PICO_SDK_PATH AND DEFINED ENV{PICO_SDK_PATH})
     set(PICO_SDK_PATH "$ENV{PICO_SDK_PATH}")
 endif()
